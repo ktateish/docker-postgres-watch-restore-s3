@@ -62,6 +62,10 @@ newest_backup_name () {
 
 prepare_db () {
 	cat << EOM | env PGPASSWORD=$POSTGRES_MASTER_PASSWORD psql -U $POSTGRES_MASTER_USER -h $POSTGRES_HOST -p $POSTGRES_PORT postgres
+REVOKE CONNECT ON DATABASE $POSTGRES_DATABASE FROM public;
+SELECT pg_terminate_backend(pg_stat_activity.pid)
+  FROM pg_stat_activity
+  WHERE pg_stat_activity.datname = '$POSTGRES_DATABASE';
 DROP DATABASE IF EXISTS $POSTGRES_DATABASE;
 DROP ROLE IF EXISTS $POSTGRES_USER;
 CREATE ROLE $POSTGRES_USER WITH LOGIN PASSWORD '$POSTGRES_PASSWORD';
@@ -79,7 +83,7 @@ restore_db () {
 		echo "$(date) Unable to get $S3_BUCKET/$S3_PREFIX/$newest"
 		return 1
 	fi
-	gunzip < $sqlfile | env PGPASSWORD=$POSTGRES_MASTER_PASSWORD psql -U $POSTGRES_MASTER_USER -h $POSTGRES_HOST -p $POSTGRES_PORT $POSTGRES_DATABASE
+	gunzip < $sqlfile | grep -v 'GRANT ALL ON SCHEMA public TO postgres;' | env PGPASSWORD=$POSTGRES_MASTER_PASSWORD psql -U $POSTGRES_MASTER_USER -h $POSTGRES_HOST -p $POSTGRES_PORT $POSTGRES_DATABASE
 	return $?
 }
 

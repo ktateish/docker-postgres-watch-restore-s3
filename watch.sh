@@ -124,7 +124,7 @@ do
 
 	if [ $pg_ok -ne 0 -o $db_ok -ne 0 ]; then
 		echo "$(date) DB host is up but DB $POSTGRES_DATABASE is not ready"
-		/bin/sh $RESTORE_SH
+		$RESTORE_SH
 		if [ $? -ne 0 ]; then
 			echo "$(date) Failed to restore DB"
 			retry=$((retry + 1))
